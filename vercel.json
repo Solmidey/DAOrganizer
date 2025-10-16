@@ -1,0 +1,23 @@
+{
+  "version": 3,
+  "routes": [
+    {
+      "src": "/api/discord/interactions",
+      "dest": "/api/discord/interactions",
+      "headers": {
+        "Cache-Control": "no-store",
+        "X-RateLimit-Limit": "3",
+        "X-RateLimit-Window": "60"
+      }
+    },
+    {
+      "src": "/api/telegram/webhook",
+      "dest": "/api/telegram/webhook",
+      "headers": {
+        "Cache-Control": "no-store",
+        "X-RateLimit-Limit": "10",
+        "X-RateLimit-Window": "60"
+      }
+    }
+  ]
+}

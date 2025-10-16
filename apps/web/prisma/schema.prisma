@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Org {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  discordGuild  String?    @unique
+  telegramChat  String?    @unique
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  users         OrgUser[]
+  proposals     Proposal[]
+  strategies    Strategy[]
+  webhooks      Webhook[]
+  settings      Json?
+}
+
+model OrgUser {
+  id         String   @id @default(cuid())
+  org        Org      @relation(fields: [orgId], references: [id])
+  orgId      String
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  roles      Role[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([orgId, userId])
+}
+
+model User {
+  id            String      @id @default(cuid())
+  email         String?     @unique
+  discordId     String?     @unique
+  telegramId    String?     @unique
+  wallets       Wallet[]
+  memberships   OrgUser[]
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Wallet {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  chainId     Int
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  nonces      Nonce[]
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  orgUser   OrgUser? @relation(fields: [orgUserId], references: [id])
+  orgUserId String?
+  name      String
+}
+
+model Strategy {
+  id          String    @id @default(cuid())
+  org         Org       @relation(fields: [orgId], references: [id])
+  orgId       String
+  type        StrategyType
+  config      Json
+  proposals   Proposal[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+enum StrategyType {
+  ERC20_BALANCE
+  ERC721_OWNERSHIP
+  ONE_PERSON_ONE_VOTE
+  ROLE_GATED
+}
+
+model Proposal {
+  id             String       @id @default(cuid())
+  org            Org          @relation(fields: [orgId], references: [id])
+  orgId          String
+  title          String
+  description    String
+  startsAt       DateTime
+  endsAt         DateTime
+  quorum         Decimal? @db.Decimal(65, 30)
+  threshold      Decimal? @db.Decimal(65, 30)
+  createdBy      User       @relation(fields: [createdById], references: [id])
+  createdById    String
+  strategy       Strategy   @relation(fields: [strategyId], references: [id])
+  strategyId     String
+  status         ProposalStatus @default(DRAFT)
+  governorProposalId String?
+  snapshotBlock  BigInt?
+  execution      Json?
+  options        Option[]
+  votes          Vote[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+enum ProposalStatus {
+  DRAFT
+  ACTIVE
+  SUCCEEDED
+  DEFEATED
+  QUEUED
+  EXECUTED
+  CANCELED
+}
+
+model Option {
+  id         String    @id @default(cuid())
+  proposal   Proposal  @relation(fields: [proposalId], references: [id])
+  proposalId String
+  title      String
+  index      Int
+  votes      Vote[]
+}
+
+model Vote {
+  id           String    @id @default(cuid())
+  proposal     Proposal  @relation(fields: [proposalId], references: [id])
+  proposalId   String
+  option       Option    @relation(fields: [optionId], references: [id])
+  optionId     String
+  voter        Wallet    @relation(fields: [walletId], references: [id])
+  walletId     String
+  weight       Decimal   @db.Decimal(65, 30)
+  signature    String
+  signedAt     DateTime  @default(now())
+  strategyData Json?
+  txHash       String?
+  metadata     Json?
+  @@unique([proposalId, walletId])
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  org       Org      @relation(fields: [orgId], references: [id])
+  orgId     String
+  url       String
+  secret    String?
+  type      WebhookType
+  createdAt DateTime @default(now())
+}
+
+enum WebhookType {
+  DISCORD
+  TELEGRAM
+  CUSTOM
+}
+
+model Nonce {
+  id        String   @id @default(cuid())
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  walletId  String
+  value     String
+  expiresAt DateTime
+  consumed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  @@index([walletId, value])
+}
