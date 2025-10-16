@@ -1,0 +1,10 @@
+node_modules
+.env
+.env.local
+.pnpm-store
+.next
+out
+artifacts
+dist
+coverage
+apps/web/prisma/dev.db
