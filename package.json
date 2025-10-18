@@ -3,10 +3,11 @@
   "private": true,
   "packageManager": "pnpm@8.15.5",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "lint": "pnpm --filter web lint",
-    "test": "pnpm -r test"
+    "postinstall": "npm --prefix apps/web install",
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "lint": "npm --prefix apps/web run lint",
+    "test": "npm --prefix apps/web run test"
   },
   "devDependencies": {
     "turbo": "^1.13.3"

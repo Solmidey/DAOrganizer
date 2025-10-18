@@ -20,7 +20,7 @@
       "@/lib/*": ["./lib/*"],
       "@/styles/*": ["./styles/*"],
       "@/app/*": ["./app/*"],
-      "@/shared/*": ["../shared/*"],
+      "@/shared/*": ["../../packages/shared/*"],
       "@/prisma": ["./prisma"]
     }
   },

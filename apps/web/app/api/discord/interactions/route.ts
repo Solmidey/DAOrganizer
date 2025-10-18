@@ -1,10 +1,10 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { InteractionType, InteractionResponseType } from "discord-interactions";
 import { verifyDiscordSignature } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
 import { signWebhookPayload } from "@/lib/security";
-
-export const runtime = "edge";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
