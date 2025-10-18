@@ -1,4 +1,7 @@
-import crypto from "crypto";
+import "server-only";
+
+import { Buffer } from "node:buffer";
+import { createHmac } from "node:crypto";
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET ?? "";
 
@@ -10,22 +13,22 @@ type SignedPayload = {
   iat: number;
 };
 
-export async function signWebhookPayload(payload: SignedPayload) {
+export function signWebhookPayload(payload: SignedPayload) {
   if (!WEBHOOK_SECRET) {
     throw new Error("WEBHOOK_SECRET is not set");
   }
   const body = JSON.stringify(payload);
-  const signature = crypto.createHmac("sha256", WEBHOOK_SECRET).update(body).digest("hex");
+  const signature = createHmac("sha256", WEBHOOK_SECRET).update(body).digest("hex");
   return Buffer.from(JSON.stringify({ body, signature })).toString("base64url");
 }
 
-export async function verifyWebhookSignature(token: string): Promise<SignedPayload | null> {
+export function verifyWebhookSignature(token: string): SignedPayload | null {
   try {
     if (!WEBHOOK_SECRET) {
       throw new Error("WEBHOOK_SECRET is not set");
     }
     const decoded = JSON.parse(Buffer.from(token, "base64url").toString("utf-8"));
-    const signature = crypto.createHmac("sha256", WEBHOOK_SECRET).update(decoded.body).digest("hex");
+    const signature = createHmac("sha256", WEBHOOK_SECRET).update(decoded.body).digest("hex");
     if (signature !== decoded.signature) return null;
     return JSON.parse(decoded.body);
   } catch (err) {
