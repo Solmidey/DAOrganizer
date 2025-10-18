@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { verifyMessage } from "viem";
 import { prisma } from "@/lib/prisma";
