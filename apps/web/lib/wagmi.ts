@@ -1,6 +1,7 @@
-import { createConfig, http } from "wagmi";
+import { http } from "viem";
 import { baseSepolia } from "viem/chains";
-import { injected } from "wagmi/connectors";
+import { createConfig } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
 const rpcUrl =
   process.env.NEXT_PUBLIC_RPC_URL ??
@@ -12,5 +13,5 @@ export const wagmiConfig = createConfig({
   transports: {
     [baseSepolia.id]: http(rpcUrl)
   },
-  connectors: [injected()]
+  connectors: [new InjectedConnector()]
 });

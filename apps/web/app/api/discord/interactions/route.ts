@@ -1,10 +1,18 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { InteractionType, InteractionResponseType } from "discord-interactions";
 import { verifyDiscordSignature } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
 import { signWebhookPayload } from "@/lib/security";
+import type { Prisma } from "@prisma/client";
 
-export const runtime = "edge";
+type ProposalWithVotes = Prisma.ProposalGetPayload<{
+  include: { options: { include: { votes: true } } };
+}>;
+
+type ProposalOptionWithVotes = ProposalWithVotes["options"][number];
+type ProposalVote = ProposalOptionWithVotes["votes"][number];
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
@@ -89,8 +97,12 @@ export async function POST(request: Request) {
         if (!proposal) {
           return NextResponse.json({ type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: { content: "Proposal not found" } });
         }
-        const tally = proposal.options
-          .map((option) => `${option.title}: ${option.votes.reduce((sum, vote) => sum + Number(vote.weight), 0)}`)
+        const options: ProposalOptionWithVotes[] = proposal.options;
+        const tally = options
+          .map((option) => {
+            const totalVotes = option.votes.reduce<number>((sum, vote: ProposalVote) => sum + Number(vote.weight), 0);
+            return `${option.title}: ${totalVotes}`;
+          })
           .join("\n");
         return NextResponse.json({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
